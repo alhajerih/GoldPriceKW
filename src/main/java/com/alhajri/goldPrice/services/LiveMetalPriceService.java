@@ -1,11 +1,12 @@
 package com.alhajri.goldPrice.services;
 
 import com.alhajri.goldPrice.DAO.MetalPriceDaoImpl;
-import com.alhajri.goldPrice.config.WhatsAppService;
+import com.alhajri.goldPrice.DAO.WhatsAppService;
 import com.alhajri.goldPrice.entity.MetalCfdResult;
+import com.alhajri.goldPrice.util.GoldCfdCalculator;
 import lombok.Getter;
+import org.springframework.stereotype.Service;
 
-import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+
+@Service
 public class LiveMetalPriceService {
 
     private final MetalPriceDaoImpl metalPriceDao;
@@ -55,7 +58,6 @@ public class LiveMetalPriceService {
             double newFx = metalPriceDao.getUsdPerKwd();
             if (newFx > 0) {
                 usdPerKwd = newFx;
-                System.out.println("FX updated: USD/KWD = " + usdPerKwd);
             }
         } catch (Exception e) {
             System.err.println("Failed to refresh FX: " + e.getMessage());
@@ -76,16 +78,36 @@ public class LiveMetalPriceService {
 
                         latestPrices = prices;
                         // Build message string
-                        StringBuilder msg = new StringBuilder("Live Gold Prices:\n");
+                        StringBuilder msg = new StringBuilder();
                             long lastCfd = lastSentCfd.getOrDefault(prices.getFirst().getMetalType(), 0L);
                             if (Math.abs(prices.getFirst().getCfdPriceUSD() - lastCfd) >= threshold) {
-                                msg.append("KWD/gram=").append(prices.getFirst().getBuyPrice24KWD())
+                                msg.append("🟡 _*Live Gold Prices*_ | *أسعار الذهب*\n\n")
+                                        .append("🇰🇼 *KWD / عيار 24 (جرام)*\n")
+                                        .append("*")
+                                        .append(prices.getFirst().getBuyPrice24KWD())
+                                        .append("*")
+                                        .append(" د.ك\n\n")
+                                        .append("💱 *CFD (USD / oz)*\n")
+                                        .append("*")
+                                        .append(prices.getFirst().getCfdPriceUSD())
+                                        .append("*")
+                                        .append(" $\n\n")
+                                        .append("━━━━━━━━━━━━━━\n")
                                         .append("\n")
-                                        .append("CFD USD/oz=").append(prices.getFirst().getCfdPriceUSD());
+                                        .append("*مؤشر السوق:*  ")
+                                        .append(prices.getFirst().getCfdPriceUSD() > lastCfd ? "📈" : "📉");
 
-                                // update last sent
+                                // update last sent CFD Price
                                 lastSentCfd.put(prices.getFirst().getMetalType(), prices.getFirst().getCfdPriceUSD());
+
+                                // =============================
+                                // ✅ TWILIO API Call
+                                // =============================
                                 whatsAppService.sendMessage(msg.toString());
+                                // =============================
+                                // ✅ WhatsApp Cloud API Call
+                                // =============================
+                                whatsAppService.sendWhatsAppTextMessage(msg.toString());
                             }
                     })
                     .exceptionally(ex -> {

@@ -1,6 +1,5 @@
 package com.alhajri.goldPrice.DAO;
 
-import com.alhajri.goldPrice.DTO.FxRateResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

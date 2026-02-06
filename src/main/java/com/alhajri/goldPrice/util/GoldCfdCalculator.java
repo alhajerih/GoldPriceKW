@@ -1,4 +1,4 @@
-package com.alhajri.goldPrice.services;
+package com.alhajri.goldPrice.util;
 
 public class GoldCfdCalculator {
 

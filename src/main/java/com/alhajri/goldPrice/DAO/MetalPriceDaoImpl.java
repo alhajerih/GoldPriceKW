@@ -4,8 +4,9 @@ import com.alhajri.goldPrice.DTO.MetalPriceDao;
 import com.alhajri.goldPrice.DTO.MetalPricesResponse;
 import com.alhajri.goldPrice.entity.MetalCfdResult;
 import com.alhajri.goldPrice.entity.MetalPriceDto;
-import com.alhajri.goldPrice.services.GoldCfdCalculator;
+import com.alhajri.goldPrice.util.GoldCfdCalculator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -14,7 +15,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
+@Repository
 public class MetalPriceDaoImpl implements MetalPriceDao {
 
     private static final String API_URL =
@@ -22,7 +23,7 @@ public class MetalPriceDaoImpl implements MetalPriceDao {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private double usdPerKwd;
+    private final double usdPerKwd;
 
     public MetalPriceDaoImpl() {
         this.httpClient = HttpClient.newHttpClient();
@@ -77,10 +78,6 @@ public class MetalPriceDaoImpl implements MetalPriceDao {
                 );
     }
 
-    // Optional: refresh USD/KWD rate dynamically
-    public void refreshFxRate() {
-        this.usdPerKwd = FxRateDao.getUsdPerKwd();
-    }
     public Double getUsdPerKwd(){
         return this.usdPerKwd;
     }
