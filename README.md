@@ -80,8 +80,8 @@ You can choose the integration method by configuring the appropriate properties 
 
 ## Credits & Acknowledgements
 
-- Metal price data courtesy of [Dar Al Sabaek](https://api.daralsabaek.com) — thank you for providing a reliable metal pricing API.
-- Currency exchange rates provided by [Money Convert](https://cdn.moneyconvert.net/api/latest.json) — a valuable resource for live currency conversions.
+- Metal price data courtesy of [Dar Al Sabaek](https://daralsabaek.com/) — thank you for providing a reliable metal pricing API.
+- Currency exchange rates provided by [Money Convert](https://moneyconvert.net/company/about/) — a valuable resource for live currency conversions.
 - WhatsApp notification integrations powered by:
     - [Twilio WhatsApp API](https://www.twilio.com/whatsapp)
     - [WhatsApp Cloud API by Meta](https://developers.facebook.com/docs/whatsapp/cloud-api)
