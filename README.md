@@ -80,11 +80,12 @@ You can choose the integration method by configuring the appropriate properties 
 
 ## Credits & Acknowledgements
 
-- Metal price data courtesy of [Dar Al Sabaek](https://daralsabaek.com/) — thank you for providing a reliable metal pricing API.
-- Currency exchange rates provided by [Money Convert](https://moneyconvert.net/company/about/) — a valuable resource for live currency conversions.
+- Metal price data courtesy of <a href="https://daralsabaek.com/" target="_blank">Dar Al Sabaek</a> thank you for providing a reliable metal pricing API.
+- Currency exchange rates provided by <a href="https://moneyconvert.net/company/about/" target="_blank">Money Convert</a>  a valuable resource for live currency conversions.
 - WhatsApp notification integrations powered by:
-    - [Twilio WhatsApp API](https://www.twilio.com/whatsapp)
-    - [WhatsApp Cloud API by Meta](https://developers.facebook.com/docs/whatsapp/cloud-api)
+    - <a href="https://www.twilio.com/whatsapp" target="_blank">Twilio WhatsApp API</a>
+    - <a href="https://developers.facebook.com/docs/whatsapp/cloud-api" target="_blank">WhatsApp Cloud API by Meta</a>
+
 
 ---
 ## Disclaimer
@@ -108,4 +109,4 @@ Feel free to contribute, raise issues, or suggest improvements!
 
 ---
 
-*Built with 💛 by *Hamad Alhajri**
+*Built with 💛 by *<a href="www.hamadalhajeri.com" target="_blank">Hamad Alhajeri</a>**
