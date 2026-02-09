@@ -37,7 +37,7 @@ public class LiveMetalPriceService {
     private volatile double usdPerKwd;
     // Track last CFD sent for each metal
     private final Map<Integer, Long> lastSentCfd = new HashMap<>();//store CFD that sent
-    private final long threshold = 1; // send if CFD changes >= 100 USD
+    private final long threshold = 75; // send if CFD changes >= 100 USD
 
     public LiveMetalPriceService(MetalPriceDaoImpl metalPriceDao, WhatsAppService whatsAppService, BotService botService, ApplicationContext applicationContext) {
         this.metalPriceDao = metalPriceDao;
