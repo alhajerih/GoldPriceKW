@@ -1,0 +1,94 @@
+package com.alhajri.goldPrice.services;
+
+import com.alhajri.goldPrice.util.TelegramUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeChat;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+public class BotService {
+    private static final Logger logger = LoggerFactory.getLogger(BotService.class);
+
+    // Track active chat IDs for broadcasting price updates
+    private final Set<Long> activeChatIds = new HashSet<>();
+
+    public void registerBotCommands(TelegramBot bot, Long chatID) {
+        try {
+            // Track this chat for price notifications
+            addActiveChatId(chatID);
+
+            List<BotCommand> commands;
+                commands = List.of(
+                        new BotCommand("/start", "Start the bot")
+                );
+
+            bot.execute(SetMyCommands.builder()
+                    .commands(commands)
+                    .scope(new BotCommandScopeChat(chatID.toString())) // per-user scope
+                    .build());
+
+        } catch (Exception e) {
+            logger.error("Failed to register bot commands", e);
+        }
+    }
+
+    /**
+     * Add a chat ID to receive price notifications
+     */
+    public void addActiveChatId(Long chatId) {
+        if (activeChatIds.add(chatId)) {
+            logger.info("✅ USER REGISTERED: Chat ID {} added to broadcast list (Total active: {})",
+                chatId, activeChatIds.size());
+        }
+    }
+
+    /**
+     * Remove a chat ID from price notifications
+     */
+    public void removeChatId(Long chatId) {
+        if (activeChatIds.remove(chatId)) {
+            logger.info("❌ USER UNREGISTERED: Chat ID {} removed from broadcast list (Total active: {})",
+                chatId, activeChatIds.size());
+        }
+    }
+
+    /**
+     * Get all active chat IDs
+     */
+    public Set<Long> getActiveChatIds() {
+        return new HashSet<>(activeChatIds);
+    }
+
+    /**
+     * Broadcast a message to all connected Telegram users
+     */
+    public void broadcastToAllChats(TelegramBot bot, String message) {
+        Set<Long> chatIds = getActiveChatIds();
+        logger.info("📢 Broadcasting to {} user(s)...", chatIds.size());
+
+        int successCount = 0;
+        int failureCount = 0;
+
+        for (Long chatId : chatIds) {
+            try {
+                TelegramUtility.sendText(bot, chatId, message);
+                successCount++;
+                logger.debug("  ✓ Sent to chat {}", chatId);
+            } catch (Exception e) {
+                failureCount++;
+                logger.error("  ✗ Failed to send to chat {}: {}", chatId, e.getMessage());
+                // Remove inactive chat IDs
+                removeChatId(chatId);
+            }
+        }
+
+        logger.info("📊 Broadcast complete - Success: {}, Failed: {}", successCount, failureCount);
+    }
+}
