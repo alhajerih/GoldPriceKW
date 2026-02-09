@@ -99,9 +99,8 @@ public class LiveMetalPriceService {
 
                         latestPrices = prices;
                         long lastCfd = lastSentCfd.getOrDefault(prices.getFirst().getMetalType(), 0L);
-                        if (Math.abs(prices.getFirst().getCfdPriceUSD() - lastCfd) >= threshold) {
+                        if (Math.abs(prices.getFirst().getCfdPriceUSD() - lastCfd) >= threshold||lastSentCfd.isEmpty()) {
                             // update last sent CFD Price
-                                lastSentCfd.put(prices.getFirst().getMetalType(), prices.getFirst().getCfdPriceUSD());
 
                                 // =============================
                                 // ✅ TELEGRAM API Call
@@ -112,6 +111,7 @@ public class LiveMetalPriceService {
                                     if (activeChatCount > 0) {
                                         logger.info("✅ TELEGRAM: Broadcasting price update to {} chat(s)", activeChatCount);
                                         botService.broadcastToAllChats(telegramBot, UtilityClass.buildGoldPriceMessage(prices, lastCfd));
+                                        lastSentCfd.put(prices.getFirst().getMetalType(), prices.getFirst().getCfdPriceUSD());
                                     } else {
                                         logger.info("📭 TELEGRAM: No active chats (waiting for users to message bot)");
                                     }
