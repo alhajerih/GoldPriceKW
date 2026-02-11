@@ -1,6 +1,7 @@
 package com.alhajri.goldPrice.config;
 
 import com.alhajri.goldPrice.services.BotService;
+import com.alhajri.goldPrice.services.LiveMetalPriceService;
 import com.alhajri.goldPrice.services.TelegramBot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ public class TelegramConfig {
     private static final Logger logger = LoggerFactory.getLogger(TelegramConfig.class);
 
     @Bean
-    public TelegramBot telegramBot(TelegramProperties properties, BotService service) throws TelegramApiException {
+    public TelegramBot telegramBot(TelegramProperties properties, BotService service, LiveMetalPriceService priceService) throws TelegramApiException {
         logger.info("Initializing TelegramBot with properties - Name: '{}', Token: '{}'",
             properties.getBotName(),
             properties.getBotToken() != null ? "***" : "NULL");
@@ -30,7 +31,7 @@ public class TelegramConfig {
             throw new IllegalArgumentException("telegram.bot.bot-token property is required and cannot be empty");
         }
 
-        TelegramBot bot = new TelegramBot(properties.getBotName(), properties.getBotToken(), service);
+        TelegramBot bot = new TelegramBot(properties.getBotName(), properties.getBotToken(), service, priceService);
         logger.info("TelegramBot instance created successfully");
 
         TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
