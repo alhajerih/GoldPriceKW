@@ -26,7 +26,8 @@ public class BotService {
 
             List<BotCommand> commands;
                 commands = List.of(
-                        new BotCommand("/start", "Start the bot")
+                        new BotCommand("/start", "Start the bot"),
+                        new BotCommand("/price","the price now")
                 );
 
             bot.execute(SetMyCommands.builder()

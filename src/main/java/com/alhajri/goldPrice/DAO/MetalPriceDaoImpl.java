@@ -4,7 +4,7 @@ import com.alhajri.goldPrice.DTO.MetalPriceDao;
 import com.alhajri.goldPrice.DTO.MetalPricesResponse;
 import com.alhajri.goldPrice.entity.MetalCfdResult;
 import com.alhajri.goldPrice.entity.MetalPriceDto;
-import com.alhajri.goldPrice.util.GoldCfdCalculator;
+import com.alhajri.goldPrice.util.GoldCalculator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Repository;
 
@@ -69,7 +69,7 @@ public class MetalPriceDaoImpl implements MetalPriceDao {
                         .map(metal -> new MetalCfdResult(
                                 metal.getMetalType(),
                                 metal.getBuyPrice24(),
-                                GoldCfdCalculator.toCfd(
+                                GoldCalculator.toCfd(
                                         metal.getBuyPrice24().doubleValue(),
                                         usdPerKwd
                                 )
@@ -77,6 +77,42 @@ public class MetalPriceDaoImpl implements MetalPriceDao {
                         .collect(Collectors.toList())
                 );
     }
+
+
+    public List<MetalCfdResult> getMetalPricesWithCfd() throws Exception {
+
+        List<MetalPriceDto> metals = getMetalPrices();
+
+        return metals.stream()
+                .map(metal -> new MetalCfdResult(
+                        metal.getMetalType(),
+                        metal.getBuyPrice24(),
+                        GoldCalculator.toCfd(
+                                metal.getBuyPrice24().doubleValue(),
+                                usdPerKwd
+                        )
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<MetalPriceDto> getMetalPrices() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL))
+                .GET()
+                .build();
+
+        HttpResponse<String> response =
+                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        MetalPricesResponse apiResponse =
+                objectMapper.readValue(response.body(), MetalPricesResponse.class);
+        if (!apiResponse.isSuccess()) {
+            throw new RuntimeException("API error: " + apiResponse.getMessage());
+        }
+        return apiResponse.getResult();
+    }
+
+
 
     public Double getUsdPerKwd(){
         return this.usdPerKwd;

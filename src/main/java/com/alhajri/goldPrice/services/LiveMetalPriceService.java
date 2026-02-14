@@ -3,7 +3,7 @@ package com.alhajri.goldPrice.services;
 import com.alhajri.goldPrice.DAO.MetalPriceDaoImpl;
 import com.alhajri.goldPrice.DAO.WhatsAppService;
 import com.alhajri.goldPrice.entity.MetalCfdResult;
-import com.alhajri.goldPrice.util.GoldCfdCalculator;
+import com.alhajri.goldPrice.util.GoldCalculator;
 import com.alhajri.goldPrice.util.UtilityClass;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -91,7 +91,7 @@ public class LiveMetalPriceService {
             metalPriceDao.getMetalPricesWithCfdAsync()
                     .thenAccept(prices -> {
                         // Recalculate CFD with latest FX
-                        prices.forEach(p -> p.setCfdPriceUSD(GoldCfdCalculator.toCfd(
+                        prices.forEach(p -> p.setCfdPriceUSD(GoldCalculator.toCfd(
                                         p.getBuyPrice24KWD().doubleValue(),
                                         usdPerKwd
                                 )
@@ -139,5 +139,19 @@ public class LiveMetalPriceService {
         } catch (Exception e) {
             logger.error("Failed to schedule metal price update: {}", e.getMessage());
         }
+    }
+
+    public String getLatestGoldPrices(Long chatId) {
+
+        List<MetalCfdResult> prices= null;
+        try {
+            prices = metalPriceDao.getMetalPricesWithCfd();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        long lastCfd = lastSentCfd.getOrDefault(prices.getFirst().getMetalType(), 0L);
+        logger.info("✅ TELEGRAM: Broadcasting price to {} chat", chatId);
+
+        return UtilityClass.buildGoldPriceMessage(prices, lastCfd);
     }
 }

@@ -1,6 +1,7 @@
 package com.alhajri.goldPrice.services;
 
 import com.alhajri.goldPrice.entity.MetalCfdResult;
+import com.alhajri.goldPrice.util.GoldCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -69,7 +70,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendText(chatId, "مرحباً! ستتلقى الآن تحديثات مباشرًة لأسعار الذهب.\n  لمعرفه سعر البيع أرسل مثلاً: 5 جرام");
             return;
         }
-
+        if (trimmed.startsWith("/price")) {
+            service.addActiveChatId(chatId);
+            service.registerBotCommands(this, chatId);
+            sendText(chatId,priceService.getLatestGoldPrices(chatId));
+            return;
+        }
         // register chat and store active status (idempotent)
         service.addActiveChatId(chatId);
         service.registerBotCommands(this, chatId);
@@ -102,19 +108,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         List<MetalCfdResult> latest = priceService.getLatestPrices();
-        if (latest == null || latest.isEmpty()) {
-            sendText(chatId, "عذراً، لا يتوفر السعر الحالي الآن. حاول مرة أخرى لاحقاً.");
-            return;
-        }
-
-        BigDecimal pricePerGram = latest.getFirst().getBuyPrice24KWD();
-        String perGramStr = pricePerGram.setScale(3, RoundingMode.HALF_UP).toPlainString();
-        pricePerGram =pricePerGram.subtract(pricePerGram.multiply(BigDecimal.valueOf(0.0059)));
-        BigDecimal total = pricePerGram.multiply(BigDecimal.valueOf(grams)).setScale(3, RoundingMode.HALF_UP);
-        String gramsStr = BigDecimal.valueOf(grams).stripTrailingZeros().toPlainString();
-        String reply = String.format("سعر البيع لـ %s جرام = %s د.ك\n(سعر 1 جرام = %s د.ك)", gramsStr, total.toPlainString(), perGramStr);
-
-        sendText(chatId, reply);
+        String sellPrice = GoldCalculator.calculateCurrentSellGold(latest,grams);
+        sendText(chatId, sellPrice);
     }
 
     // Normalize Arabic-Indic digits to ASCII digits, keep other chars
@@ -131,7 +126,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return sb.toString();
     }
 
-    private void sendText(Long chatId, String text) {
+    public void sendText(Long chatId, String text) {
         try {
             SendMessage msg = new SendMessage();
             msg.setChatId(chatId.toString());
