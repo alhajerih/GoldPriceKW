@@ -1,16 +1,17 @@
-# Gold Price Monitoring & WhatsApp Notification Service
+# Gold Price Monitoring & WhatsApp/Telegram Notification Service
 
 ## Project Overview
 
-This project provides a real-time monitoring service for gold prices and related metals, fetching data from external APIs, calculating Contract for Difference (CFD) prices, and sending timely updates via WhatsApp notifications. The notifications can be sent using either **Twilio WhatsApp API** or the **WhatsApp Cloud API** based on configuration.
+This project provides a real-time monitoring service for gold prices and related metals, fetching data from external APIs, calculating Contract for Difference (CFD) prices, and sending timely updates via **WhatsApp** or **Telegram** notifications. The notifications can be sent using either **Twilio WhatsApp API**, **WhatsApp Cloud API**, or **Telegram Bot API** based on configuration.
 
 The main goals of this project are:
 
 - Fetch up-to-date metal prices (including gold) from a trusted source.
 - Convert prices between Kuwaiti Dinar (KWD) and USD using live exchange rates.
 - Calculate CFD prices with customizable thresholds to avoid notification spamming.
-- Send notifications through WhatsApp with user-configurable integration options.
+- Send notifications through WhatsApp or Telegram with user-configurable integration options.
 - Run updates periodically (every 15 seconds) using a scheduled service.
+- Support Arabic language for Telegram messages with KWD currency.
 
 ---
 
@@ -45,11 +46,11 @@ The main goals of this project are:
 
 ### 3. Notification Integration Options
 
-This project supports two different methods to send WhatsApp notifications:
+This project supports three different methods to send notifications:
 
 #### a) Twilio WhatsApp API
 
-- Uses Twilio’s official Java SDK.
+- Uses Twilio's official Java SDK.
 - Requires Twilio account credentials: `Account SID`, `Auth Token`, WhatsApp sender, and receiver numbers.
 - Easy to integrate and widely used for programmable messaging.
 
@@ -57,7 +58,14 @@ This project supports two different methods to send WhatsApp notifications:
 
 - Uses direct HTTP REST calls to WhatsApp Cloud API.
 - Requires Facebook/Meta app setup with access tokens and phone number ID.
-- Offers more native WhatsApp Cloud integration via Meta’s platform.
+- Offers more native WhatsApp Cloud integration via Meta's platform.
+
+#### c) Telegram Bot API
+
+- Uses direct HTTP REST calls to Telegram Bot API.
+- Requires Telegram Bot token and chat ID.
+- Supports Arabic language messages with KWD pricing information.
+- Example command: `sell 5 grems` returns price in Arabic with KD currency.
 
 You can choose the integration method by configuring the appropriate properties in your application settings.
 
@@ -65,27 +73,30 @@ You can choose the integration method by configuring the appropriate properties 
 
 ## How to Use
 
-1. Configure your API keys and phone numbers in the application properties:
+1. Configure your API keys and settings in the application properties:
 
     - For Twilio: set `accountSid`, `authToken`, `whatsappFrom`, and `whatsappTo`.
     - For WhatsApp Cloud API: set `accessToken`, `phoneNumberId`, and `apiVersion`.
+    - For Telegram: set `telegramBotToken` and `telegramChatId`.
 
 2. Run the service to start periodic polling of metal prices.
 
-3. The service calculates CFD prices and sends WhatsApp notifications when the price difference threshold is exceeded.
+3. The service calculates CFD prices and sends notifications when the price difference threshold is exceeded.
 
-4. Monitor console logs or configure further logging to track notifications.
+4. For Telegram, users can input commands like `sell 5 grems` to receive prices in Arabic with KD currency.
+
+5. Monitor console logs or configure further logging to track notifications.
 
 ---
 
 ## Credits & Acknowledgements
 
 - Metal price data courtesy of <a href="https://daralsabaek.com/" target="_blank">Dar Al Sabaek</a> thank you for providing a reliable metal pricing API.
-- Currency exchange rates provided by <a href="https://moneyconvert.net/company/about/" target="_blank">Money Convert</a>  a valuable resource for live currency conversions.
-- WhatsApp notification integrations powered by:
+- Currency exchange rates provided by <a href="https://moneyconvert.net/company/about/" target="_blank">Money Convert</a> a valuable resource for live currency conversions.
+- Notification integrations powered by:
     - <a href="https://www.twilio.com/whatsapp" target="_blank">Twilio WhatsApp API</a>
     - <a href="https://developers.facebook.com/docs/whatsapp/cloud-api" target="_blank">WhatsApp Cloud API by Meta</a>
-
+    - <a href="https://core.telegram.org/bots/api" target="_blank">Telegram Bot API</a>
 
 ---
 ## Disclaimer
@@ -109,4 +120,4 @@ Feel free to contribute, raise issues, or suggest improvements!
 
 ---
 
-*Built with 💛 by *<a href="www.hamadalhajeri.com" target="_blank">Hamad Alhajeri</a>**
+*Built with 💛 by <a href="www.hamadalhajeri.com" target="_blank">Hamad Alhajeri</a>*
