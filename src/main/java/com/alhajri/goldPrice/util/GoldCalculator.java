@@ -1,7 +1,6 @@
 package com.alhajri.goldPrice.util;
 
 import com.alhajri.goldPrice.entity.MetalCfdResult;
-import com.alhajri.goldPrice.services.LiveMetalPriceService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
