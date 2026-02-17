@@ -71,6 +71,18 @@ You can choose the integration method by configuring the appropriate properties 
 
 ---
 
+## Admin Dashboard & Persistence (Telegram)
+
+A small admin dashboard is included to manage Telegram users and send messages from a web UI.
+
+- Persistence: an in-memory H2 database is used by default (configured in application.properties). Telegram users are stored in the `telegram_users` table with their chat ID and last sent CFD value.
+- Admin UI: visit `/admin` while the application is running. The page lists registered users and provides a form to send a message to all users (leave Chat ID empty) or to a specific user by entering their Chat ID.
+- H2 Console: available at `/h2-console` (JDBC URL: `jdbc:h2:mem:goldprice`).
+
+To enable persistence to a file or production DB, update `spring.datasource.*` properties in `application.properties`.
+
+---
+
 ## How to Use
 
 1. Configure your API keys and settings in the application properties:
@@ -86,6 +98,10 @@ You can choose the integration method by configuring the appropriate properties 
 4. For Telegram, users can input commands like `sell 5 grems` to receive prices in Arabic with KD currency.
 
 5. Monitor console logs or configure further logging to track notifications.
+
+6. Access the admin dashboard at `/admin` to manage Telegram users and send messages.
+
+7. (Optional) Access the H2 console at `/h2-console` to view or manage the in-memory database.
 
 ---
 

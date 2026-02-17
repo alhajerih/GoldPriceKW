@@ -18,7 +18,7 @@ public class UtilityClass {
     public static String buildGoldPriceMessage(List<MetalCfdResult> prices, double lastCfd) {
         if (prices == null || prices.isEmpty()) return "";
 
-        MetalCfdResult first = prices.getFirst();
+        MetalCfdResult first = prices.get(0);
         double currentCfd = first.getCfdPriceUSD();
         double buyPrice = first.getBuyPrice24KWD().doubleValue();
 

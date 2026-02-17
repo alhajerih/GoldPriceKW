@@ -5,15 +5,14 @@ import com.alhajri.goldPrice.DAO.WhatsAppService;
 import com.alhajri.goldPrice.entity.MetalCfdResult;
 import com.alhajri.goldPrice.util.GoldCalculator;
 import com.alhajri.goldPrice.util.UtilityClass;
+import com.alhajri.goldPrice.repository.TelegramUserRepository;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +27,7 @@ public class LiveMetalPriceService {
     private final BotService botService;
     private final ApplicationContext applicationContext;
     private final WhatsAppService whatsAppService;
+    private final TelegramUserRepository telegramUserRepository;
 
     // Thread-safe latest prices
     @Getter
@@ -35,15 +35,19 @@ public class LiveMetalPriceService {
 
     // Thread-safe latest FX
     private volatile double usdPerKwd;
-    // Track last CFD sent for each metal
-    private final Map<Integer, Long> lastSentCfd = new HashMap<>();//store CFD that sent
-    private final long threshold = 25; // send if CFD changes >= 100 USD
+    // Threshold: send notification if CFD changes >= this value
+    private final long threshold = 25;
 
-    public LiveMetalPriceService(MetalPriceDaoImpl metalPriceDao, WhatsAppService whatsAppService, BotService botService, ApplicationContext applicationContext) {
+    public LiveMetalPriceService(MetalPriceDaoImpl metalPriceDao,
+                                 WhatsAppService whatsAppService,
+                                 BotService botService,
+                                 ApplicationContext applicationContext,
+                                 TelegramUserRepository telegramUserRepository) {
         this.metalPriceDao = metalPriceDao;
         this.whatsAppService = whatsAppService;
         this.botService = botService;
         this.applicationContext = applicationContext;
+        this.telegramUserRepository = telegramUserRepository;
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.usdPerKwd = metalPriceDao.getUsdPerKwd(); // initial FX
     }
@@ -98,39 +102,59 @@ public class LiveMetalPriceService {
                         ));
 
                         latestPrices = prices;
-                        long lastCfd = lastSentCfd.getOrDefault(prices.getFirst().getMetalType(), 0L);
-                        if (Math.abs(prices.getFirst().getCfdPriceUSD() - lastCfd) >= threshold||lastSentCfd.isEmpty()) {
-                            // update last sent CFD Price
+                        long currentCfd = prices.get(0).getCfdPriceUSD();
 
-                                // =============================
-                                // ✅ TELEGRAM API Call
-                                // =============================
-                                TelegramBot telegramBot = getTelegramBot();
-                                if (telegramBot != null) {
-                                    int activeChatCount = botService.getActiveChatIds().size();
-                                    if (activeChatCount > 0) {
-                                        logger.info("✅ TELEGRAM: Broadcasting price update to {} chat(s)", activeChatCount);
-                                        botService.broadcastToAllChats(telegramBot, UtilityClass.buildGoldPriceMessage(prices, lastCfd));
-                                        lastSentCfd.put(prices.getFirst().getMetalType(), prices.getFirst().getCfdPriceUSD());
+                        // =============================
+                        // ✅ TELEGRAM API Call (per-user lastSentCfd)
+                        // =============================
+                        TelegramBot telegramBot = getTelegramBot();
+                        if (telegramBot != null) {
+                            var chatIds = botService.getActiveChatIds();
+                            int activeChatCount = chatIds.size();
+                            if (activeChatCount > 0) {
+                                logger.info("✅ TELEGRAM: Checking {} user(s) for price updates", activeChatCount);
+                                int sentCount = 0;
+                                for (Long chatId : chatIds) {
+                                    // Get user's last sent CFD from DB
+                                    var telegramUser = telegramUserRepository.findById(chatId).orElse(null);
+                                    long userLastCfd = (telegramUser != null) ? telegramUser.getLastSentCfd() : 0L;
+
+                                    // Check if threshold exceeded for this user
+                                    if (Math.abs(currentCfd - userLastCfd) >= threshold) {
+                                        try {
+                                            String message = UtilityClass.buildGoldPriceMessage(prices, userLastCfd);
+                                            telegramBot.sendText(chatId, message);
+                                            botService.updateLastSentCfd(chatId, currentCfd);
+                                            sentCount++;
+                                            logger.debug("  ✓ Sent price update to chat {}", chatId);
+                                        } catch (Exception e) {
+                                            logger.error("  ✗ Failed to send to chat {}: {}", chatId, e.getMessage());
+                                            botService.removeChatId(chatId);
+                                        }
                                     } else {
-                                        logger.info("📭 TELEGRAM: No active chats (waiting for users to message bot)");
+                                        logger.debug("  ⊘ Chat {} within threshold (current: {}, last: {})",
+                                            chatId, currentCfd, userLastCfd);
                                     }
-                                } else {
-                                    logger.warn("⚠️  TELEGRAM: Bot bean not available");
                                 }
-
-                                // =============================
-                                // ✅ TWILIO API Call
-                                // =============================
-                                logger.info("📞 WHATSAPP (Twilio): Sending Not message...");
-                                //whatsAppService.sendMessage(msg.toString());
-
-                                // =============================
-                                // ✅ WhatsApp Cloud API Call
-                                // =============================
-                                logger.info("📱 WHATSAPP (Cloud API): Sending Not message...");
-                                //whatsAppService.sendWhatsAppTextMessage(msg.toString());
+                                logger.info("✅ TELEGRAM: Sent updates to {}/{} user(s)", sentCount, activeChatCount);
+                            } else {
+                                logger.info("📭 TELEGRAM: No active chats (waiting for users to message bot)");
                             }
+                        } else {
+                            logger.warn("⚠️  TELEGRAM: Bot bean not available");
+                        }
+
+                        // =============================
+                        // ✅ TWILIO API Call
+                        // =============================
+                        logger.info("📞 WHATSAPP (Twilio): Sending Not message...");
+                        //whatsAppService.sendMessage(msg.toString());
+
+                        // =============================
+                        // ✅ WhatsApp Cloud API Call
+                        // =============================
+                        logger.info("📱 WHATSAPP (Cloud API): Sending Not message...");
+                        //whatsAppService.sendWhatsAppTextMessage(msg.toString());
                     })
                     .exceptionally(ex -> {
                         logger.error("Error in price update callback", ex);
@@ -142,16 +166,24 @@ public class LiveMetalPriceService {
     }
 
     public String getLatestGoldPrices(Long chatId) {
-
-        List<MetalCfdResult> prices= null;
+        List<MetalCfdResult> prices = null;
         try {
             prices = metalPriceDao.getMetalPricesWithCfd();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        long lastCfd = lastSentCfd.getOrDefault(prices.getFirst().getMetalType(), 0L);
-        logger.info("✅ TELEGRAM: Broadcasting price to {} chat", chatId);
 
-        return UtilityClass.buildGoldPriceMessage(prices, lastCfd);
+        // Recalculate CFD with latest FX
+        prices.forEach(p -> p.setCfdPriceUSD(GoldCalculator.toCfd(
+                p.getBuyPrice24KWD().doubleValue(),
+                usdPerKwd
+        )));
+
+        // Get user's last sent CFD from DB
+        var telegramUser = telegramUserRepository.findById(chatId).orElse(null);
+        long userLastCfd = (telegramUser != null) ? telegramUser.getLastSentCfd() : 0L;
+
+        logger.info("✅ TELEGRAM: Sending price to user {} (last sent: {})", chatId, userLastCfd);
+        return UtilityClass.buildGoldPriceMessage(prices, userLastCfd);
     }
 }

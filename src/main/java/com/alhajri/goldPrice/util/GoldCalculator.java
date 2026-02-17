@@ -25,7 +25,7 @@ public class GoldCalculator {
             reply= "عذراً، لا يتوفر السعر الحالي الآن. حاول مرة أخرى لاحقاً.";
             return reply;
         }
-        BigDecimal pricePerGram = latest.getFirst().getBuyPrice24KWD();
+        BigDecimal pricePerGram = latest.get(0).getBuyPrice24KWD();
         String perGramStr = pricePerGram.setScale(3, RoundingMode.HALF_UP).toPlainString();
         pricePerGram =pricePerGram.subtract(pricePerGram.multiply(BigDecimal.valueOf(0.007115)));
         BigDecimal total = pricePerGram.multiply(BigDecimal.valueOf(grams)).setScale(3, RoundingMode.HALF_UP);
@@ -33,5 +33,3 @@ public class GoldCalculator {
         return String.format("سعر البيع لـ %s جرام = %s د.ك\n(سعر 1 جرام = %s د.ك)", gramsStr, total.toPlainString(), perGramStr);
     }
 }
-
-
