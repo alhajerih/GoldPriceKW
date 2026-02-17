@@ -9,7 +9,7 @@ import java.util.List;
 public class GoldCalculator {
 
     private static final double GRAM_TO_OUNCE = 31.1035;
-    private static final double BROKER_FACTOR = 0.992;
+    private static final double BROKER_FACTOR = 0.993;
 
     /**
      * Calculate CFD using dynamic USD per KWD
@@ -27,7 +27,7 @@ public class GoldCalculator {
         }
         BigDecimal pricePerGram = latest.getFirst().getBuyPrice24KWD();
         String perGramStr = pricePerGram.setScale(3, RoundingMode.HALF_UP).toPlainString();
-        pricePerGram =pricePerGram.subtract(pricePerGram.multiply(BigDecimal.valueOf(0.0059)));
+        pricePerGram =pricePerGram.subtract(pricePerGram.multiply(BigDecimal.valueOf(0.007115)));
         BigDecimal total = pricePerGram.multiply(BigDecimal.valueOf(grams)).setScale(3, RoundingMode.HALF_UP);
         String gramsStr = BigDecimal.valueOf(grams).stripTrailingZeros().toPlainString();
         return String.format("سعر البيع لـ %s جرام = %s د.ك\n(سعر 1 جرام = %s د.ك)", gramsStr, total.toPlainString(), perGramStr);
